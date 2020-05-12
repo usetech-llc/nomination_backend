@@ -1,0 +1,38 @@
+{
+  "name": "NominationBack",
+  "version": "1.0.0",
+  "description": "Substrate Nomination Backend",
+  "main": "",
+  "directories": {
+    "test": "test"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": ""
+  },
+  "author": "",
+  "license": "Apache 2.0",
+  "homepage": "",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.17.1",
+    "fs": "^0.0.1-security",
+    "got": "^10.7.0",
+    "path": "^0.12.7",
+    "@polkadot/api": "^1.14.0-beta.6",
+    "rwlock": "^5.0.0",
+    "sprintf-js": "^1.1.2",
+    "@types/bn.js": "^4.11.6"
+  },
+  "standard": {
+    "globals": [
+      "it",
+      "assert",
+      "beforeEach",
+      "afterEach",
+      "describe",
+      "contract",
+      "artifacts"
+    ]
+  }
+}
