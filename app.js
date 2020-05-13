@@ -3,11 +3,12 @@ const express = require('express');
 const Substrate = require('./utils/substrate.js');
 
 const port = 3003;
+const urlPrefix = "/api";
 const app = express();
 
 const sub = new Substrate();
 
-app.get('/health', async function (req, res) {
+app.get(`${urlPrefix}/health`, async function (req, res) {
 
 	const conn = await sub.isConnected();
 	let status = {
@@ -17,7 +18,7 @@ app.get('/health', async function (req, res) {
 	res.send(JSON.stringify(status));
 });
 
-app.get('/bestvalidators', function (req, res) {
+app.get(`${urlPrefix}/bestvalidators`, function (req, res) {
 	const bestList = sub.getBestValidatorList();
 	res.send(JSON.stringify(bestList));
 });
