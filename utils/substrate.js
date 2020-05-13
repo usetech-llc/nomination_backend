@@ -53,7 +53,9 @@ module.exports = class Substrate {
    */
   async handleBlocks() {
     await this.api.rpc.chain.subscribeNewHeads(async (header) => {
-      console.log(`Chain is at block: #${header.number}`);
+      if (header.number % 100 == 0) 
+        console.log(`Chain is at block: #${header.number}`);
+
       const blockHash = await this.api.rpc.chain.getBlockHash(header.number);
       const block = await this.api.rpc.chain.getBlock(blockHash);
 
@@ -61,9 +63,11 @@ module.exports = class Substrate {
       for (let i=0; i<extrinsics.length; i++) {
         const callIndex = extrinsics[i]._raw['method']['callIndex'];
         const c = await this.api.findCall(callIndex);
-        console.log("Module called: ", c.section);
-        if (c.section == STAKING)
+        //console.log("Module called: ", c.section);
+        if (c.section == STAKING) {
+          console.log(`A ${STAKING} transaction was called`);
           this.createValidatorList(); // do not await
+        }
       }
 
     });
