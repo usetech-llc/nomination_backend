@@ -1,11 +1,11 @@
 const settings = {
     defaultHost: 'https://nomination.usetech.com/',
-    urlPrefix: '/api',
     smtpHost: process.env.SMTP_HOST,
-    smtpPort: parseInt(process.env.SMTP_PORT),
-    smtpUser: process.env.SMTP_USER,
     smtpPassword: process.env.SMTP_PASSWORD,
+    smtpPort: parseInt(process.env.SMTP_PORT, 10),
     smtpUseTLS: process.env.SMTP_USE_TLS === 'true',
+    smtpUser: process.env.SMTP_USER,
+    urlPrefix: '/api',
 };
 
-module.exports = settings;
+export default settings;
