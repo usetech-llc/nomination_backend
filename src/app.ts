@@ -16,7 +16,8 @@ mongoose.connect('mongodb://localhost:27017/nomination', { useNewUrlParser: true
 
 // Configure content security
 const allowedOrigins = ['http://localhost:3000', 'https://nomination.usetech.com'];
-
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 app.use((req, res, next) => {
 	res.header('Access-Control-Allow-Origin', '*');
 	res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
@@ -26,6 +27,9 @@ app.use((req, res, next) => {
 // Initializing routes.
 routes(app);
 
+/*
 substrate.init().catch(console.error).finally(() => {
 	app.listen(port, () => console.log(`App listening on port ${port}!`));
 });
+*/
+app.listen(port, () => console.log(`App listening on port ${port}!`));

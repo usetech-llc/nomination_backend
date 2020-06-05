@@ -2,14 +2,14 @@ import nodemailer from 'nodemailer';
 import settings from '../utils/config';
 
 const mailerUtil = {
-    getMailer: (options?: any) => {
-        if (!options.smtpHost) {
+    getMailer: () => {
+        if (!settings.smtpUser || !settings.smtpPassword) {
             return null;
         }
         return nodemailer.createTransport({
             auth: {
-                pass: options.smtpPassword,
-                user: options.smtpUser,
+                pass: settings.smtpPassword,
+                user: settings.smtpUser,
             },
             /* host: settings.smtpHost,
             port: settings.smtpPort,
@@ -19,6 +19,7 @@ const mailerUtil = {
     },
     sendSubscriptionEmail: (email, subscriptionCode) => {
         const mailer = mailerUtil.getMailer();
+        console.log('sendSubscriptionEmail', email, 'subscriptionCode', subscriptionCode);
         if (!mailer) { return false; }
 
         const link = `${settings.defaultHost}/users/confirm/${subscriptionCode}`;

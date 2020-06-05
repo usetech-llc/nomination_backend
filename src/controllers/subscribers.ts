@@ -51,43 +51,58 @@ const subscribers = {
     },
     // subscribe users - generate subscription code, save it into db and send it to email
     subscribe: async (req, res) => {
-        const accountId = req.query.accountId;
-        const { emailAddress } = req.body;
-        if (!emailAddress) {
-            res.status(400);
-            res.send('Email address not provided');
-        }
-        // check if we already have subscription for this account
-        // если есть - отвечаем, что есть
-        const isSubscribed = await subscribersModel.checkSubscription(accountId);
         const response: IResponseInterface = {};
-        if (isSubscribed) {
-            response.status = 'success';
-            response.data = {
-                message: 'You have already subscribed',
-            };
-            res.send(response);
-        }
-        const currentSubscription = await subscribersModel.generateSubscriptionCode(accountId);
-        const sendEmailStatus =
-          await mailerUtil.sendSubscriptionEmail(emailAddress, currentSubscription.subscriptionCode);
-        if (sendEmailStatus) {
-            response.status = 'success';
-            response.data = {
-                message: 'Notification email successfully sent',
-            };
-            res.send(response);
-            return;
-        }
+        try {
+            const accountId = req.params.accountId;
+            const { email } = req.body;
+            console.log('email', email, 'accountId', accountId);
+            if (!email) {
+                res.status(400);
+                res.send('Email address not provided');
+                return;
+            }
+            // check if we already have subscription for this account
+            // если есть - отвечаем, что есть
+            const isSubscribed = await subscribersModel.checkSubscription(accountId);
+            if (isSubscribed) {
+                response.status = 'success';
+                response.data = {
+                    message: 'You have already subscribed',
+                };
+                res.send(response);
+                return;
+            }
+            const currentSubscription = await subscribersModel.generateSubscriptionCode(accountId, email);
+            console.log('currentSubscription', currentSubscription);
+            const sendEmailStatus =
+              await mailerUtil.sendSubscriptionEmail(
+                email,
+                currentSubscription.subscriptionCode,
+              );
+            if (sendEmailStatus) {
+                response.status = 'success';
+                response.data = {
+                    message: 'Notification email successfully sent',
+                };
+                res.send(response);
+                return;
+            }
 
-        res.status(400);
-        response.data = {
-            message: 'Cannot send email',
-        };
-        res.send(response);
+            res.status(400);
+            response.data = {
+                message: 'Cannot send email',
+            };
+            res.send(response);
+        } catch (e) {
+            console.log('error', e);
+            res.status(400);
+            response.data = e;
+            res.send(response);
+        }
     },
     // subscribe users - generate subscription key, save it into db and send it to email
     unsubscribe: async (req, res) => {
+        // “Thank you, your subscription has been cancelled”
         const unsubscriptionCode = req.query.code;
         const response: IResponseInterface = {};
         const userData = subscribersModel.checkSubscriptionCode(unsubscriptionCode);
