@@ -10,4 +10,5 @@ COPY . .
 
 EXPOSE 3003
 
-CMD ["node", "app.js"]
+RUN chmod +x run.sh
+CMD ["bash", "-c", "./run.sh"]
