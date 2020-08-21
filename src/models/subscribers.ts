@@ -4,6 +4,11 @@ import q from 'q';
 import settings from '../utils/config';
 // import path from 'path';
 
+type DbSubscriber = {
+  subscriptionCode: string;
+  unSubscriptionCode: string;
+}
+
 interface ISubscribersModelInterface {
     checkSubscription: (accountId: string) => Promise<any>;
     checkSubscriptionCode: (accountId: string) => {
@@ -11,10 +16,7 @@ interface ISubscribersModelInterface {
         email: string,
     };
     deleteSubscription: (accountId: string) => Promise<void>;
-    generateSubscriptionCode: (accountId: string, email: string) => Promise<{
-        subscriptionCode: string;
-        unSubscriptionCode: string;
-    }>;
+    generateSubscriptionCode: (accountId: string, email: string) => Promise<DbSubscriber>;
     saveUserSubscription: (accountId: string, email: string) => boolean;
 }
 
@@ -47,7 +49,7 @@ const subscribersModel: ISubscribersModelInterface = {
       return new Promise(() => null);
     },
     generateSubscriptionCode: async (accountId, email) => {
-        const dbSubscriber = await Subscriber.findOne({ accountId, isApproved: false }).exec();
+        const dbSubscriber = await Subscriber.findOne({ accountId, isApproved: false }).exec() as DbSubscriber & mongoose.Document;
         if (dbSubscriber) {
             return {
                 subscriptionCode: dbSubscriber.subscriptionCode,

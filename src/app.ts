@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 
 import substrate from './controllers/substrate';
 import routes from './routes/routes';
+import config from './config';
 
 const port = 3003;
 const app = express();
@@ -12,7 +13,7 @@ const app = express();
 const db = mongoose.connection;
 db.on('error', console.error);
 db.once('open', () => console.log('database connected'));
-mongoose.connect('mongodb://localhost:27017/nomination', { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(config.mongoConnection, { useNewUrlParser: true, useUnifiedTopology: true, keepAlive: true, poolSize: 30, socketTimeoutMS: 36000, connectTimeoutMS: 36000 });
 
 // Configure content security
 const allowedOrigins = ['http://localhost:3000', 'https://nomination.usetech.com'];
