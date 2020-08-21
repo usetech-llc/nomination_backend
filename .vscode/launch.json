@@ -16,6 +16,21 @@
             "outFiles": [
                 "${workspaceFolder}/dist/**/*.js"
             ]
-        }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Mocha Current File",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "args": [
+                "--timeout", "999999",
+                "--colors",
+                "--recursive",
+                "--require", "ts-node/register",
+                "${file}"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+      }
     ]
 }

@@ -37,7 +37,7 @@ class RpiService {
     return validators.sort((a, b) => b.rpiQuality - a.rpiQuality);
   }
 
-  private rpiQuality({ mean, stdDeviation }: { mean: number; stdDeviation: number; }, ksi: number): any {
+  public rpiQuality({ mean, stdDeviation }: { mean: number; stdDeviation: number; }, ksi: number): any {
     if (ksi < 0 || ksi > 1) {
       throw `invalid parameter - ksi = ${ksi}`;
     }
@@ -53,7 +53,7 @@ class RpiService {
     }
   }
 
-  private meanAndStdDeviation(array: number[]): { mean: number, stdDeviation: number } {
+  public meanAndStdDeviation(array: number[]): { mean: number, stdDeviation: number } {
     let n = 0,
       m = 0,
       s = 0;
