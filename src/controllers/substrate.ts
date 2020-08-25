@@ -1,5 +1,5 @@
 import Substrate from '../utils/substrate.js';
-import createSubstrateApi from '../utils/substrate-api.js';
+import createSubstrateApi, { reconnectSubstrate } from '../utils/substrate-api.js';
 import RpiService from '../rpi-nomination-strategy/rpi-service.js';
 import Validator from '../rpi-nomination-strategy/models/validator.js';
 import { Request, Response } from 'express';
@@ -23,15 +23,25 @@ const substrateController: ISubstrateControllerInterface = {
     rpiBestValidators: async (req: Request, res: Response) => {
       req.setTimeout(1000*60*60*5);
 
-      const validators = await retry(async () => {
-        const api = await createSubstrateApi();
+      const api = await createSubstrateApi();
+      const lastEra = await api.query.staking.currentEra();
+      const lastEraNumber = lastEra.unwrapOrDefault().toNumber();
 
-        const mongo = createMongoConnection();
-  
-        const service = new RpiService(api, mongo);
-        return await service.bestValidators(parseFloat(req.params["ksi"]));
-      });
+      const validators = await retry(async () => {
+        try {
+          const api = await createSubstrateApi();
+
+          const mongo = createMongoConnection();
+    
+          const service = new RpiService(api, mongo);
       
+          return await service.bestValidators(parseFloat(req.params["ksi"]), lastEraNumber);
+        } catch(error) {
+          await reconnectSubstrate();
+          throw error;
+        }
+      });
+
       res.setHeader('Content-Type', 'application/json');
       res.send(JSON.stringify(validators));
     },

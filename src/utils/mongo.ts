@@ -12,6 +12,24 @@ type MemoizedRequest = {
   value: string;
 }
 
+const badValidatorSchema = new Schema({
+  validator: { type: String },
+  era: { type: Number },
+  reason: { type: String }
+});
+
+type BadValidator = {
+  validator: string,
+  era: number,
+  reason: string
+}
+
+export async function addBadValidator(mongo: Mongoose, validator: BadValidator) {
+  const model = mongo.model('BadValidator', badValidatorSchema);
+  await new model(validator)
+    .save();
+}
+
 export function mongoMemoizeFunction<TArgs extends any[], TResult>(mongo: Mongoose, f: (...args: TArgs) => Promise<TResult>): (...args: TArgs) => Promise<TResult> {
   return (...args: TArgs): Promise<TResult> => mongoMemoize(mongo, `${f.name}(${args.join(', ')})`, () => f(...args));
 }

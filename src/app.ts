@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import substrate from './controllers/substrate';
 import routes from './routes/routes';
 import config from './config';
+import { reconnectSubstrate } from './utils/substrate-api';
 
 const port = 3003;
 const app = express();
@@ -20,17 +21,22 @@ const allowedOrigins = ['http://localhost:3000', 'https://nomination.usetech.com
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use((req, res, next) => {
-	res.header('Access-Control-Allow-Origin', '*');
-	res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-	next();
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
 });
 
 // Initializing routes.
 routes(app);
 
-/*
-substrate.init().catch(console.error).finally(() => {
-	app.listen(port, () => console.log(`App listening on port ${port}!`));
-});
-*/
-app.listen(port, () => console.log(`App listening on port ${port}!`));
+reconnectSubstrate()
+  .then(_ => {
+    
+    /*
+    substrate.init().catch(console.error).finally(() => {
+      app.listen(port, () => console.log(`App listening on port ${port}!`));
+    });
+    */
+    app.listen(port, () => console.log(`App listening on port ${port}!`));
+  });
+
