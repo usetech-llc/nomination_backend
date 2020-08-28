@@ -1,16 +1,7 @@
-import { Mongoose, connect, Schema } from "mongoose";
+import { Mongoose, connect, Schema, Model, Document } from "mongoose";
 import mongoose from "mongoose";
 import config from "../config";
-
-const memoizeSchema = new Schema({
-  key: { index: true, type: String },
-  value: { type: String }
-});
-
-type MemoizedRequest = {
-  key: string;
-  value: string;
-}
+import { RpiMongoNames } from "../models/mongo-names";
 
 const badValidatorSchema = new Schema({
   validator: { type: String },
@@ -30,15 +21,35 @@ export async function addBadValidator(mongo: Mongoose, validator: BadValidator) 
     .save();
 }
 
-export function mongoMemoizeFunction<TArgs extends any[], TResult>(mongo: Mongoose, f: (...args: TArgs) => Promise<TResult>): (...args: TArgs) => Promise<TResult> {
-  return (...args: TArgs): Promise<TResult> => mongoMemoize(mongo, `${f.name}(${args.join(', ')})`, () => f(...args));
+
+const memoizeSchema = new Schema({
+  key: { index: true, type: String },
+  value: { type: String }
+});
+
+type MemoizedRequest = {
+  key: string;
+  value: string;
+}
+
+export interface MemoizedCallInfo<TParam, TResult> {
+  params: TParam,
+  name: RpiMongoNames,
+  call: () => Promise<TResult>
+}
+
+function makeMemoizeKey(name: RpiMongoNames, params: any): string {
+  return `${config.wsEndpoint} ${name}(${JSON.stringify(params)})`;
 }
 
 const runningGetters: { [key: string]: Promise<any> } = {};
 
-export async function mongoMemoize<T>(mongo: Mongoose, key: string, getter: () => Promise<T>): Promise<T> {
-  key = `${config.wsEndpoint} ${key}`;
-  const memoizeCollection = mongo.model('MemoizedRequest', memoizeSchema);
+function memoizedRequestModel(mongo: Mongoose): Model<Document, {}> {
+  return mongo.model('MemoizedRequest', memoizeSchema);
+}
+
+async function readMemoizedValue<T>(mongo: Mongoose, key: string): Promise<T> {
+  const memoizeCollection = memoizedRequestModel(mongo);
 
   try {
     const memoizedValue = (await memoizeCollection.findOne({ key })).toObject() as MemoizedRequest;
@@ -50,14 +61,30 @@ export async function mongoMemoize<T>(mongo: Mongoose, key: string, getter: () =
   catch(error){
   }
 
+  return undefined;
+}
+
+export function readMemoized<TParam, TResult>(mongo: Mongoose, call: MemoizedCallInfo<TParam, TResult>): Promise<TResult> {
+  const key = makeMemoizeKey(call.name, call.params);
+  return readMemoizedValue(mongo, key);
+}
+
+export async function mongoMemoize<TParam, TResult>(mongo: Mongoose, call: MemoizedCallInfo<TParam, TResult>): Promise<TResult> {
+  const key = makeMemoizeKey(call.name, call.params);
+  const memoizedValue = await readMemoizedValue<TResult>(mongo, key);
+  if(memoizedValue) {
+    return memoizedValue;
+  }
+
   const firstGetterCaller = !runningGetters[key];
   if(firstGetterCaller) {
-    runningGetters[key] = getter();
+    runningGetters[key] = call.call();
   }
   const runningGetter = runningGetters[key];
   const value = await runningGetter;
 
   if(firstGetterCaller) {
+    const memoizeCollection = memoizedRequestModel(mongo);
     await new memoizeCollection({
       key: key,
       value: JSON.stringify(value)

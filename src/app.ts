@@ -1,11 +1,13 @@
 import bodyParser from 'body-parser';
 import express from 'express';
 import mongoose from 'mongoose';
+import swaggerUi from 'swagger-ui-express';
 
 import substrate from './controllers/substrate';
 import routes from './routes/routes';
 import config from './config';
 import { reconnectSubstrate } from './utils/substrate-api';
+import yamljs from 'yamljs';
 
 const port = 3003;
 const app = express();
@@ -25,6 +27,9 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
   next();
 });
+
+const swagger = yamljs.load('./swagger.yaml');
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swagger));
 
 // Initializing routes.
 routes(app);

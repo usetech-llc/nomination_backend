@@ -6,7 +6,12 @@ import { DeriveStakingElected } from "@polkadot/api-derive/staking/types";
 import Rpi from "./models/rpi";
 import BN from "bn.js";
 import { Mongoose } from "mongoose";
-import { mongoMemoize, addBadValidator } from "../utils/mongo";
+import { mongoMemoize, addBadValidator, MemoizedCallInfo } from "../utils/mongo";
+import { RpiMongoNames } from "../models/mongo-names";
+import { Exposure, ValidatorPrefs } from "@polkadot/types/interfaces/staking/types";
+import AccountId from "@polkadot/types/generic/AccountId";
+import { Option } from "@polkadot/types";
+import { BalanceOf } from "@polkadot/types/interfaces/runtime/types";
 
 
 class RpiService {
@@ -16,15 +21,61 @@ class RpiService {
     private mongo: Mongoose) {
   }
 
+  public electedInfoCall(era: number): MemoizedCallInfo<number, DeriveStakingElected> {
+    return {
+      call: () => this.api.derive.staking.electedInfo(),
+      name: RpiMongoNames.electedInfo,
+      params: era
+    };
+  }
+
+  public loadEraCall(era: number, elected: DeriveStakingElected): MemoizedCallInfo<number, Era> {
+    return {
+      call: () => this.loadEra(era, elected),
+      name: RpiMongoNames.loadEra,
+      params: era
+    };
+  }
+
+  public erasStakersCall(era: number, accountId: AccountId | string): MemoizedCallInfo<{era: number, accountId: string}, Exposure> {
+    return {
+      call: () => this.api.query.staking.erasStakers(era, accountId),
+      name: RpiMongoNames.erasStakers,
+      params: {
+        era,
+        accountId: accountId.toString()
+      }
+    };
+  }
+
+  public erasValidatorRewardCall(era: number): MemoizedCallInfo<number, Option<BalanceOf>> {
+    return {
+      call: () => this.api.query.staking.erasValidatorReward(era),
+      name: RpiMongoNames.erasValidatorReward,
+      params: era
+    };
+  }
+
+  public erasValidatorPrefsCall(era: number, accountId: AccountId | string): MemoizedCallInfo<{era: number, accountId: string}, ValidatorPrefs> {
+    return {
+      call: () => this.api.query.staking.erasValidatorPrefs(era, accountId),
+      name: RpiMongoNames.erasValidatorPrefs,
+      params: {
+        era,
+        accountId: accountId.toString()
+      }
+    };
+  }
+
   public async bestValidators(ksi: number, era: number): Promise<Validator[]> {
 
-    const electedInfo = await mongoMemoize(this.mongo, `electedInfo(${era})`, () => this.api.derive.staking.electedInfo());
+    const electedInfo = await mongoMemoize(this.mongo, this.electedInfoCall(era));
 
     const eraNumbers = new Array(config.erasRange).fill(0).map((_, index) => era - index).filter(v => v >= 0);
 
     const eras: Era[] = [];
     for(let i = 0; i < eraNumbers.length; i++) {
-      eras.push(await mongoMemoize(this.mongo, `loadEra(${eraNumbers[i]})`, () => this.loadEra(eraNumbers[i], electedInfo)));
+      eras.push(await mongoMemoize(this.mongo, this.loadEraCall(eraNumbers[i], electedInfo)));
     }
 
     const rpis = electedInfo
@@ -94,12 +145,13 @@ class RpiService {
   public async loadEra(eraNumber: number, electedInfo: DeriveStakingElected): Promise<Era> {
     const rpis: { [accountId: string]: Rpi } = {};
 
-    await Promise.all(electedInfo.info.map(async staking => {
+    for(let i = 0; i < electedInfo.info.length; i++) {
+      const staking = electedInfo.info[i]
       const accountId = staking.accountId;
 
-      const exposure = await mongoMemoize(this.mongo, `erasStakers(${eraNumber}, ${accountId})`, () => this.api.query.staking.erasStakers(eraNumber, accountId));
-      const eraReward = await mongoMemoize(this.mongo, `erasValidatorReward(${eraNumber})`, () => this.api.query.staking.erasValidatorReward(eraNumber));
-      const eraPrefs = await mongoMemoize(this.mongo, `erasValidatorPrefs(${eraNumber}, ${accountId})`, () => this.api.query.staking.erasValidatorPrefs(eraNumber, accountId));
+      const exposure = await mongoMemoize(this.mongo, this.erasStakersCall(eraNumber, accountId));
+      const eraReward = await mongoMemoize(this.mongo, this.erasValidatorRewardCall(eraNumber));
+      const eraPrefs = await mongoMemoize(this.mongo, this.erasValidatorPrefsCall(eraNumber, accountId));
 
       let eraRewardNumber = 0;
       if(eraReward && eraReward.unwrapOr) {
@@ -125,7 +177,7 @@ class RpiService {
       }
 
       rpis[accountId.toString()] = rewardPerInvestment;
-    }));
+    }
 
 
     return {

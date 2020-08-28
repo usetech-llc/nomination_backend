@@ -24,21 +24,21 @@ describe('rpi-service', () => {
 
   it('rpi for ksi < 0.5 calculates correctly', () => {
     const service = new RpiService(null, null);
-    const rpi = service.rpiQuality({mean: 11, stdDeviation: 10}, 0.2);
+    const { rpi } = service.rpiQuality({mean: 11, stdDeviation: 10}, 0.2);
     
     withinError(rpi, 0.5);
   });
 
   it('rpi for ksi = 0.5 calculates correctly', () => {
     const service = new RpiService(null, null);
-    const rpi = service.rpiQuality({mean: 11, stdDeviation: 10}, 0.5);
+    const { rpi } = service.rpiQuality({mean: 11, stdDeviation: 10}, 0.5);
     
     withinError(rpi, 1.1);
   });
 
   it('rpi for ksi = 0.5 calculates correctly', () => {
     const service = new RpiService(null, null);
-    const rpi = service.rpiQuality({mean: 100, stdDeviation: 10}, 0.8);
+    const { rpi } = service.rpiQuality({mean: 100, stdDeviation: 10}, 0.8);
     
     withinError(rpi, 64);
   });

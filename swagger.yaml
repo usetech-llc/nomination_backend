@@ -1,0 +1,102 @@
+swagger: "2.0"
+info:
+  description: "Validators nomination api."
+  version: "1.0.0"
+  title: "Nomination"
+
+
+tags:
+- name: "RPI"
+  description: "Return per investment algorithms."
+- name: "Mongo"
+  description: "Exploring mongo values."
+
+basePath: "/api"
+
+schemes:
+- "http"
+
+paths:
+  /rpi/bestvalidators/{ksi}:
+    get:
+      description: Returns a list of validators ordered by rpi 
+      tags:
+        - RPI
+      parameters:
+      - name: "ksi"
+        in: "path"
+        description: "Return vs. risk parameter. 0 for lowest risk, 1 for highest return."
+        required: true
+        type: "number"
+        format: "double"
+      produces:
+        - application/json
+      responses:
+        200:
+          description: ""
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Validator"
+  /mongo/memoized-rpi-requests/{name}:
+    get:
+      description: "View memoized substrate requests. Optionaly execute them and memoize."
+      tags:
+      - Mongo
+      parameters:
+      - name: "name"
+        in: "path"
+        description: "Name of mongo collection."
+        required: true
+        type: "string"
+        enum:
+        - "electedInfo"
+        - "loadEra"
+        - "erasStakers"
+        - "erasValidatorReward"
+        - "erasValidatorPrefs"
+      - name: "era"
+        in: "query"
+        description: "Era used to get data from substrate if required."
+        type: "integer"
+        format: "int64"
+      - name: "eraRange"
+        in: "query"
+        description: "How many eras to query. Era = 10 and eraRange = 3 will return eras 10, 9, 8."
+        type: "integer"
+        format: "int64"
+        default: 83
+      - name: "accountId"
+        in: "query"
+        description: "Validator's account ID."
+        type: "string"
+      - name: "cacheOnly"
+        in: "query"
+        description: "true to use mongo only, false to calculate if mongo is empty"
+        default: true
+        type: "boolean"
+      produces:
+        - 'text/plain'
+      responses:
+        200:
+          description: ""
+
+  /current-era:
+    get:
+      description: "Returns current era."
+      responses:
+        200:
+          schema:
+            type: "integer"
+            format: "int64"
+        
+definitions:
+  Validator:
+    required:
+      - accountId
+      - rpiQuality
+    properties:
+      accountId:
+        type: string
+      rpiQuality:
+        type: number

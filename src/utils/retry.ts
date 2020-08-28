@@ -1,4 +1,4 @@
-export default async function retry<T>(f: () => Promise<T>, retryCount = 10): Promise<T> {
+export default async function retry<T>(f: () => Promise<T>, retryCount = 100): Promise<T> {
   try {
     return await f();
   } catch(error) {

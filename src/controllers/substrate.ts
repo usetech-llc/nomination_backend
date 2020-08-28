@@ -27,23 +27,28 @@ const substrateController: ISubstrateControllerInterface = {
       const lastEra = await api.query.staking.currentEra();
       const lastEraNumber = lastEra.unwrapOrDefault().toNumber();
 
-      const validators = await retry(async () => {
-        try {
-          const api = await createSubstrateApi();
+      try {
+        const validators = await retry(async () => {
+          try {
+            const api = await createSubstrateApi();
 
-          const mongo = createMongoConnection();
-    
-          const service = new RpiService(api, mongo);
+            const mongo = createMongoConnection();
       
-          return await service.bestValidators(parseFloat(req.params["ksi"]), lastEraNumber);
-        } catch(error) {
-          await reconnectSubstrate();
-          throw error;
-        }
-      });
+            const service = new RpiService(api, mongo);
+        
+            return await service.bestValidators(parseFloat(req.params["ksi"]), lastEraNumber);
+          } catch(error) {
+            await reconnectSubstrate();
+            throw error;
+          }
+        });
 
-      res.setHeader('Content-Type', 'application/json');
-      res.send(JSON.stringify(validators));
+        res.setHeader('Content-Type', 'application/json');
+        res.send(JSON.stringify(validators));
+      }
+      catch (error) {
+        res.sendStatus(500);
+      }
     },
     health: async (req, res) => {
         const conn = await sub.isConnected();
