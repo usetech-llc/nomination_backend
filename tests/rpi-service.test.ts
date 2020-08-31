@@ -36,7 +36,7 @@ describe('rpi-service', () => {
     withinError(rpi, 1.1);
   });
 
-  it('rpi for ksi = 0.5 calculates correctly', () => {
+  it('rpi for ksi > 0.5 calculates correctly', () => {
     const service = new RpiService(null, null);
     const { rpi } = service.rpiQuality({mean: 100, stdDeviation: 10}, 0.8);
     
