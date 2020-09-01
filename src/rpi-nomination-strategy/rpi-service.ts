@@ -145,13 +145,15 @@ class RpiService {
   public async loadEra(eraNumber: number, electedInfo: DeriveStakingElected): Promise<Era> {
     const rpis: { [accountId: string]: Rpi } = {};
 
-    for(let i = 0; i < electedInfo.info.length; i++) {
-      const staking = electedInfo.info[i]
+    await Promise.all(electedInfo.info.map(async staking => {
       const accountId = staking.accountId;
 
-      const exposure = await mongoMemoize(this.mongo, this.erasStakersCall(eraNumber, accountId));
-      const eraReward = await mongoMemoize(this.mongo, this.erasValidatorRewardCall(eraNumber));
-      const eraPrefs = await mongoMemoize(this.mongo, this.erasValidatorPrefsCall(eraNumber, accountId));
+      const [exposure, eraReward, eraPrefs] = 
+        await Promise.all([
+          mongoMemoize(this.mongo, this.erasStakersCall(eraNumber, accountId)),
+          mongoMemoize(this.mongo, this.erasValidatorRewardCall(eraNumber)),
+          mongoMemoize(this.mongo, this.erasValidatorPrefsCall(eraNumber, accountId))
+      ]);
 
       let eraRewardNumber = 0;
       if(eraReward && eraReward.unwrapOr) {
@@ -177,7 +179,7 @@ class RpiService {
       }
 
       rpis[accountId.toString()] = rewardPerInvestment;
-    }
+    }));
 
 
     return {

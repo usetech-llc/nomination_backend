@@ -17,14 +17,14 @@ schemes:
 - "http"
 
 paths:
-  /rpi/bestvalidators/{ksi}:
+  /rpi/bestvalidators:
     get:
       description: Returns a list of validators ordered by rpi 
       tags:
         - RPI
       parameters:
       - name: "ksi"
-        in: "path"
+        in: "query"
         description: "Return vs. risk parameter. 0 for lowest risk, 1 for highest return."
         required: true
         type: "number"

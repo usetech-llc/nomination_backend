@@ -5,6 +5,7 @@ import Validator from '../rpi-nomination-strategy/models/validator.js';
 import { Request, Response } from 'express';
 import createMongoConnection from '../utils/mongo.js';
 import retry from '../utils/retry.js';
+import config from '../config.js';
 
 interface ISubstrateControllerInterface {
     bestValidators: (req: any, res: any) => void;
@@ -22,6 +23,11 @@ const substrateController: ISubstrateControllerInterface = {
     },
     rpiBestValidators: async (req: Request, res: Response) => {
       req.setTimeout(1000*60*60*5);
+      const ksi = parseFloat(req.query['ksi'] as string);
+      if (ksi < 0 || ksi > 1) {
+        res.sendStatus(402);
+        return;
+      }
 
       const api = await createSubstrateApi();
       const lastEra = await api.query.staking.currentEra();
@@ -29,22 +35,17 @@ const substrateController: ISubstrateControllerInterface = {
 
       try {
         const validators = await retry(async () => {
-          try {
-            const api = await createSubstrateApi();
+          const api = await createSubstrateApi();
 
-            const mongo = createMongoConnection();
+          const mongo = createMongoConnection();
+    
+          const service = new RpiService(api, mongo);
       
-            const service = new RpiService(api, mongo);
-        
-            return await service.bestValidators(parseFloat(req.params["ksi"]), lastEraNumber);
-          } catch(error) {
-            await reconnectSubstrate();
-            throw error;
-          }
+          return await service.bestValidators(ksi, lastEraNumber);
         });
 
         res.setHeader('Content-Type', 'application/json');
-        res.send(JSON.stringify(validators));
+        res.send(JSON.stringify(validators.map(v => v.accountId).slice(0, config.validatorsCountInResponse)));
       }
       catch (error) {
         res.sendStatus(500);
