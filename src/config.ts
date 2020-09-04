@@ -1,6 +1,6 @@
 
 const config = {
-  wsEndpoint: process.env.wsEndpoint || 'wss://kusama-rpc.polkadot.io',
+  wsEndpoint: process.env.wsEndpoint || 'wss://cc3-5.kusama.network',
   erasRange: process.env.erasRange === undefined ? 83 : +process.env.erasRange,
   permill: +process.env.permill || 1_000_000,
   validatorsCountInResponse: +process.env.validatorsCountInResponse || 16,

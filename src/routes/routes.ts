@@ -13,6 +13,7 @@ const routes = (app: Express) => {
     app.get(`${urlPrefix}/health`, substrate.health);
     app.get(`${urlPrefix}/bestvalidators`, substrate.bestValidators);
     app.get(`${urlPrefix}/rpi/bestvalidators`, substrate.rpiBestValidators);
+    app.get(`${urlPrefix}/rpi/background-jobs/:id`, substrate.rpiBestValidatorsJob);
 
     app.post(`${urlPrefix}/subscribe/new/:accountId`, subscribers.subscribe);
     app.get(`${urlPrefix}/subscribe/confirm/:code`, subscribers.confirmSubscription);
