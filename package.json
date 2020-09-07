@@ -19,7 +19,7 @@
     "body-parser": "^1.18.3",
     "express": "^4.17.1",
     "fs": "^0.0.1-security",
-    "got": "^10.7.0",
+    "got": "^11.6.0",
     "path": "^0.12.7",
     "rwlock": "^5.0.0",
     "sprintf-js": "^1.1.2"
