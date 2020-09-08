@@ -27,7 +27,8 @@
   },
   "scripts": {
     "build": "tsc && cp swagger.yaml dist/ || copy swagger.yaml dist",
-    "start": "npm run build && node dist/app.js",
+    "start": "npm run build && npm run launch",
+    "launch": "node dist/app.js",
     "test": "mocha -r ts-node/register tests/**/*.test.ts"
   },
   "author": "",
