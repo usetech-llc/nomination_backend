@@ -37,7 +37,23 @@ paths:
           schema:
             type: "array"
             items:
-              $ref: "#/definitions/Validator"
+              $ref: "#/definitions/RpiBestValidatorsResponse"
+  /rpi/background-jobs/{id}:
+    get:
+      description: Returns a result of a long running /rpi/bestvalidators request.
+      tags:
+        - RPI
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "Job Id returned by /rpi/bestvalidators."
+        required: true
+        type: "string"
+      produces:
+        - application/json
+      responses:
+        200:
+          description: ""
   /mongo/memoized-rpi-requests/{name}:
     get:
       description: "View memoized substrate requests. Optionaly execute them and memoize."
@@ -97,6 +113,14 @@ definitions:
       - rpiQuality
     properties:
       accountId:
-        type: string
+        type: "string"
       rpiQuality:
-        type: number
+        type: "number"
+  RpiBestValidatorsResponse:
+    properties:
+      validators:
+        type: "array"
+        items:
+          type: "string"
+      jobId:
+        type: "string"

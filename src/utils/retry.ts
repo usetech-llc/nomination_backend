@@ -19,18 +19,22 @@ export default async function retry<T>(f: () => Promise<T>, retryCount = 100): P
     });
 
   });
-  api.on('disconnected', () => {
+  const innerRetry = (err) => {
     reconnectSubstrate()
       .then(_ => {
         if(retryCount < 0) {
-          reject('Maximum retry exceeded.');
+          reject(err);
         }
     
         retry(f, retryCount - 1)
           .then(resolve, reject);
     
       }, reject);
-  });
+  };
+
+  api.on('disconnected', innerRetry);
+
+  api.on('error', innerRetry);
 
   return promise;
 }

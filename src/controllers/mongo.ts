@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import { parseQueryInt } from '../utils/request-parser';
-import { RpiMongoNames } from '../models/mongo-names';
+import { RpiMongoNames } from '../models/rpi-mongo-names';
 import createSubstrateApi from '../utils/substrate-api';
-import createMongoConnection, { MemoizedCallInfo, readMemoized, mongoMemoize } from '../utils/mongo';
+import createMongoConnection from '../mongo/mongo';
 import RpiService from '../rpi-nomination-strategy/rpi-service';
+import { readMemoized, mongoMemoize } from '../mongo/memoized-requests';
 
 
 interface MemoizedRpiRequest {

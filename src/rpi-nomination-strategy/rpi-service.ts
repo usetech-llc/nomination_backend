@@ -6,13 +6,15 @@ import { DeriveStakingElected } from "@polkadot/api-derive/staking/types";
 import Rpi from "./models/rpi";
 import BN from "bn.js";
 import { Mongoose } from "mongoose";
-import { mongoMemoize, addBadValidator, MemoizedCallInfo } from "../utils/mongo";
-import { RpiMongoNames } from "../models/mongo-names";
+import { mongoMemoize, MemoizedCallInfo, readMemoized } from "../mongo/memoized-requests";
+import { addBadValidator } from "../mongo/bad-validators-log";
+import { RpiMongoNames } from "../models/rpi-mongo-names";
 import { Exposure, ValidatorPrefs } from "@polkadot/types/interfaces/staking/types";
 import AccountId from "@polkadot/types/generic/AccountId";
 import { Option } from "@polkadot/types";
 import { BalanceOf } from "@polkadot/types/interfaces/runtime/types";
 
+type ReportProgress = (args: {current: number, total: number}) => Promise<any>;
 
 class RpiService {
   
@@ -67,15 +69,40 @@ class RpiService {
     };
   }
 
-  public async bestValidators(ksi: number, era: number): Promise<Validator[]> {
+  public erasRange(era: number): number[] {
+    return new Array(config.erasRange).fill(0).map((_, index) => era - index).filter(v => v >= 0);
+  }
+
+  public async areBestValidatorsMemoized(era: number): Promise<boolean> {
+    const elected = await readMemoized(this.mongo, this.electedInfoCall(era));
+    if(!elected) {
+      return false;
+    }
+
+    const erasRange = this.erasRange(era);
+    const areMemoized = (await Promise.all(erasRange.map(era => readMemoized(this.mongo, this.loadEraCall(era, elected)))))
+      .map(e => !!e)
+      .reduce((prev, cur) => prev && cur, true);
+
+    return areMemoized;
+  }
+
+  public async bestValidators(ksi: number, era: number, reportProgress: ReportProgress = undefined): Promise<Validator[]> {
+    const eraNumbers = this.erasRange(era);
+
+    let currentProgress = 0;
+    let totalProgress = eraNumbers.length + 1;
+
+    reportProgress && await reportProgress({current: currentProgress++, total: totalProgress});
 
     const electedInfo = await mongoMemoize(this.mongo, this.electedInfoCall(era));
 
-    const eraNumbers = new Array(config.erasRange).fill(0).map((_, index) => era - index).filter(v => v >= 0);
-
+    reportProgress && await reportProgress({current: currentProgress++, total: totalProgress});
+    
     const eras: Era[] = [];
     for(let i = 0; i < eraNumbers.length; i++) {
       eras.push(await mongoMemoize(this.mongo, this.loadEraCall(eraNumbers[i], electedInfo)));
+      reportProgress && await reportProgress({current: currentProgress++, total: totalProgress});
     }
 
     const rpis = electedInfo

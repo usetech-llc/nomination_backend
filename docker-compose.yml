@@ -1,10 +1,32 @@
 version: "3"
 
 services:
-  api:
-    image: nominationapi
+  backend:
     ports:
-      - 3003:3003
+    - 3003:3003
     build:
       context: ./
-      dockerfile: Dockerfile
+      dockerfile: dockerfile.backend
+    restart: 'always'
+    environment: 
+    - mongoConnection=mongodb://mongo:27017/nomination
+    networks:
+    - mongo_network
+    depends_on:
+    - 'mongo'
+  mongo:
+    image: 'mongo'
+    restart: 'always'
+    ports:
+    - 27017:27017
+    volumes:
+    - 'mongo_data:/data/db'
+    networks:
+    - mongo_network
+
+volumes:
+  mongo_data:
+
+networks: 
+  mongo_network:
+    driver: bridge

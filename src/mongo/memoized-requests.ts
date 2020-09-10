@@ -1,25 +1,6 @@
 import { Mongoose, connect, Schema, Model, Document } from "mongoose";
-import mongoose from "mongoose";
 import config from "../config";
-import { RpiMongoNames } from "../models/mongo-names";
-
-const badValidatorSchema = new Schema({
-  validator: { type: String },
-  era: { type: Number },
-  reason: { type: String }
-});
-
-type BadValidator = {
-  validator: string,
-  era: number,
-  reason: string
-}
-
-export async function addBadValidator(mongo: Mongoose, validator: BadValidator) {
-  const model = mongo.model('BadValidator', badValidatorSchema);
-  await new model(validator)
-    .save();
-}
+import { RpiMongoNames } from "../models/rpi-mongo-names";
 
 
 const memoizeSchema = new Schema({
@@ -93,8 +74,4 @@ export async function mongoMemoize<TParam, TResult>(mongo: Mongoose, call: Memoi
   }
 
   return value;
-}
-
-export default function createMongoConnection(): Mongoose {
-  return mongoose;
 }

@@ -1,0 +1,14 @@
+FROM node:latest
+
+COPY src nomination/src
+COPY package*.json nomination/
+COPY swagger.yaml nomination/
+COPY tsconfig.json nomination/
+WORKDIR nomination
+
+RUN npm install
+RUN npm run build
+
+EXPOSE 3003
+
+CMD ["npm", "run", "launch"]
