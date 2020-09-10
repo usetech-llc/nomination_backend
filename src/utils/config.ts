@@ -6,7 +6,7 @@ const settings = {
     smtpUseTLS: process.env.SMTP_USE_TLS === 'true',
     smtpUser: '', // process.env.SMTP_USER,
     tokenKey: '23c3-3c4d-32fh-2g5h',
-    urlPrefix: '/api',
+    urlPrefix: '/api/v2',
 };
 
 export default settings;
