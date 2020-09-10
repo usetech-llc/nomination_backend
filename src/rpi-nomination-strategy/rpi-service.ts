@@ -105,10 +105,10 @@ class RpiService {
       reportProgress && await reportProgress({current: currentProgress++, total: totalProgress});
     }
 
-    const rpis = electedInfo
-      .info.map(i => i.accountId.toString())
-      .map(accountId => ({ accountId, meanAndStdDeviation: this.meanAndStdDeviation(eras.map(e => e.rpis[accountId] || 0)) }))
-      .map(v => ({ accountId: v.accountId, rpiQuality: this.rpiQuality(v.meanAndStdDeviation, ksi)}));
+    const rpis = electedInfo.info
+      .map(i => ({ accountId: i.accountId.toString(), exposure: i.exposure, validatorPrefs: i.validatorPrefs}))
+      .map(v => ({ accountId: v.accountId, exposure: v.exposure, validatorPrefs: v.validatorPrefs, meanAndStdDeviation: this.meanAndStdDeviation(eras.map(e => e.rpis[v.accountId] || 0)) }))
+      .map(v => ({ accountId: v.accountId, exposure: v.exposure, validatorPrefs: v.validatorPrefs, rpiQuality: this.rpiQuality(v.meanAndStdDeviation, ksi)}));
     
     rpis
       .filter(r => r.rpiQuality.error !== undefined)

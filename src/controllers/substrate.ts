@@ -24,8 +24,8 @@ interface RpiBestValidatorsResponse {
   jobId: string
 }
 
-function cutValidatorsResponse(validators: Validator[]): string[] {
-  return validators.map(v => v.accountId).slice(0, config.validatorsCountInResponse);
+function cutValidatorsResponse(validators: Validator[]): any[] {
+  return validators.map(v => ({ accountId: v.accountId, exposure: v.exposure, validatorPrefs: v.validatorPrefs })).slice(0, config.validatorsCountInResponse);
 }
 
 async function getValidators(ksi: number, era: number): Promise<RpiBestValidatorsResponse> {
