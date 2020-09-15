@@ -13,6 +13,7 @@ import { Exposure, ValidatorPrefs } from "@polkadot/types/interfaces/staking/typ
 import AccountId from "@polkadot/types/generic/AccountId";
 import { Option } from "@polkadot/types";
 import { BalanceOf } from "@polkadot/types/interfaces/runtime/types";
+import promisifySubstrate from "../utils/promisify-substrate";
 
 type ReportProgress = (args: {current: number, total: number}) => Promise<any>;
 
@@ -25,7 +26,7 @@ class RpiService {
 
   public electedInfoCall(era: number): MemoizedCallInfo<number, DeriveStakingElected> {
     return {
-      call: () => this.api.derive.staking.electedInfo(),
+      call: () => promisifySubstrate(this.api, () => this.api.derive.staking.electedInfo())(),
       name: RpiMongoNames.electedInfo,
       params: era
     };
@@ -41,7 +42,7 @@ class RpiService {
 
   public erasStakersCall(era: number, accountId: AccountId | string): MemoizedCallInfo<{era: number, accountId: string}, Exposure> {
     return {
-      call: () => this.api.query.staking.erasStakers(era, accountId),
+      call: () => promisifySubstrate(this.api, (era, accountId) => this.api.query.staking.erasStakers(era, accountId))(era, accountId),
       name: RpiMongoNames.erasStakers,
       params: {
         era,
@@ -52,7 +53,7 @@ class RpiService {
 
   public erasValidatorRewardCall(era: number): MemoizedCallInfo<number, Option<BalanceOf>> {
     return {
-      call: () => this.api.query.staking.erasValidatorReward(era),
+      call: () => promisifySubstrate(this.api, era => this.api.query.staking.erasValidatorReward(era))(era),
       name: RpiMongoNames.erasValidatorReward,
       params: era
     };
@@ -60,7 +61,7 @@ class RpiService {
 
   public erasValidatorPrefsCall(era: number, accountId: AccountId | string): MemoizedCallInfo<{era: number, accountId: string}, ValidatorPrefs> {
     return {
-      call: () => this.api.query.staking.erasValidatorPrefs(era, accountId),
+      call: () => promisifySubstrate(this.api, (era, accountId) => this.api.query.staking.erasValidatorPrefs(era, accountId))(era, accountId),
       name: RpiMongoNames.erasValidatorPrefs,
       params: {
         era,

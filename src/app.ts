@@ -1,12 +1,8 @@
 import bodyParser from 'body-parser';
 import express from 'express';
-import mongoose from 'mongoose';
 import swaggerUi from 'swagger-ui-express';
 
-import substrate from './controllers/substrate';
 import routes from './routes/routes';
-import config from './config';
-import { reconnectSubstrate } from './utils/substrate-api';
 import yamljs from 'yamljs';
 import createAgenda from './agenda/create-agenda';
 import initAgenda from './agenda/init';
@@ -44,8 +40,6 @@ async function initWebServer() {
   // Initializing routes.
   routes(app);
 
-  await reconnectSubstrate();
-  
   app.listen(port, () => console.log(`App listening on port ${port}!`));
 }
 

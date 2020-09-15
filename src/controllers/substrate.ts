@@ -1,5 +1,4 @@
 import Substrate from '../utils/substrate.js';
-import createSubstrateApi, { reconnectSubstrate } from '../utils/substrate-api.js';
 import RpiService from '../rpi-nomination-strategy/rpi-service.js';
 import Validator from '../rpi-nomination-strategy/models/validator.js';
 import { Request, Response } from 'express';
@@ -8,8 +7,9 @@ import retry from '../utils/retry.js';
 import config from '../config.js';
 import * as sortingValidatorsJob from '../agenda/jobs/sorting-validators';
 import createAgenda from '../agenda/create-agenda.js';
-import { async } from 'q';
 import { getJobData } from '../mongo/sorting-validators-job.js';
+import usingApi from '../utils/using-api.js';
+import promisifySubstrate from '../utils/promisify-substrate.js';
 
 interface ISubstrateControllerInterface {
     bestValidators: (req: any, res: any) => void;
@@ -30,23 +30,24 @@ function cutValidatorsResponse(validators: Validator[]): any[] {
 
 async function getValidators(ksi: number, era: number): Promise<RpiBestValidatorsResponse> {
   return await retry(async () => {
-    const api = await createSubstrateApi();
-    const mongo = createMongoConnection();
+    return await usingApi(async api => {
+      const mongo = createMongoConnection();
 
-    const service = new RpiService(api, mongo);
-    
-    if(!await service.areBestValidatorsMemoized(era)) {
-      const jobId = await sortingValidatorsJob.now(await createAgenda(), { ksi, era: era })
-      return {
-        validators: undefined,
-        jobId
+      const service = new RpiService(api, mongo);
+      
+      if(!await service.areBestValidatorsMemoized(era)) {
+        const jobId = await sortingValidatorsJob.now(await createAgenda(), { ksi, era: era })
+        return {
+          validators: undefined,
+          jobId
+        }
       }
-    }
-    const validators = await service.bestValidators(ksi, era);
-    return {
-      validators: cutValidatorsResponse(validators),
-      jobId: undefined
-    };
+      const validators = await service.bestValidators(ksi, era);
+      return {
+        validators: cutValidatorsResponse(validators),
+        jobId: undefined
+      };
+    });
   });
 }
 
@@ -65,9 +66,10 @@ const substrateController: ISubstrateControllerInterface = {
         return;
       }
 
-      const api = await createSubstrateApi();
-      const lastEra = await api.query.staking.currentEra();
-      const lastEraNumber = lastEra.unwrapOrDefault().toNumber();
+      const lastEraNumber = await usingApi(async api => {
+        const lastEra = await promisifySubstrate(api, () => api.query.staking.currentEra())();
+        return lastEra.unwrapOrDefault().toNumber();
+      });
 
       try {
         const response = await getValidators(ksi, lastEraNumber);

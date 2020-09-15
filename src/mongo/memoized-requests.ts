@@ -62,16 +62,23 @@ export async function mongoMemoize<TParam, TResult>(mongo: Mongoose, call: Memoi
     runningGetters[key] = call.call();
   }
   const runningGetter = runningGetters[key];
-  const value = await runningGetter;
+  try {
+    const value = await runningGetter;
 
-  if(firstGetterCaller) {
-    const memoizeCollection = memoizedRequestModel(mongo);
-    await new memoizeCollection({
-      key: key,
-      value: JSON.stringify(value)
-    }).save();
-    delete runningGetters[key];
+    if(firstGetterCaller) {
+      const memoizeCollection = memoizedRequestModel(mongo);
+      await new memoizeCollection({
+        key: key,
+        value: JSON.stringify(value)
+      }).save();
+
+    }
+    return value;
+  }
+  finally {
+    if(firstGetterCaller) {
+      delete runningGetters[key];
+    }
   }
 
-  return value;
 }

@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import { parseQueryInt } from '../utils/request-parser';
 import { RpiMongoNames } from '../models/rpi-mongo-names';
-import createSubstrateApi from '../utils/substrate-api';
 import createMongoConnection from '../mongo/mongo';
 import RpiService from '../rpi-nomination-strategy/rpi-service';
 import { readMemoized, mongoMemoize } from '../mongo/memoized-requests';
+import usingApi from '../utils/using-api';
 
 
 interface MemoizedRpiRequest {
@@ -58,20 +58,21 @@ const mongoController = {
     const accountId: string = req.query['accountId'] as string;
     const cacheOnly: boolean = req.query['cacheOnly'] === 'true';
 
-    const api = await createSubstrateApi();
-    const mongo = createMongoConnection();
+    await usingApi(async api => {
+      const mongo = createMongoConnection();
 
-    const rpiService = new RpiService(api, mongo);
-
-    const r: MemoizedRpiRequest = {
-      accountId,
-      era,
-      eraRange,
-      name
-    };
-    const callResult = await makeCall(rpiService, r, (call) => cacheOnly ? readMemoized(mongo, call) : mongoMemoize(mongo, call));
-    res.setHeader('Content-disposition',`attachment; filename=${name}_${era}_${eraRange}_${accountId}`);
-    res.send(JSON.stringify(callResult));
+      const rpiService = new RpiService(api, mongo);
+  
+      const r: MemoizedRpiRequest = {
+        accountId,
+        era,
+        eraRange,
+        name
+      };
+      const callResult = await makeCall(rpiService, r, (call) => cacheOnly ? readMemoized(mongo, call) : mongoMemoize(mongo, call));
+      res.setHeader('Content-disposition',`attachment; filename=${name}_${era}_${eraRange}_${accountId}`);
+      res.send(JSON.stringify(callResult));
+    });
   },
 }
 

@@ -3,9 +3,9 @@ import { v4 } from "uuid";
 import retry from "../../utils/retry";
 import RpiService from "../../rpi-nomination-strategy/rpi-service";
 import createMongoConnection from "../../mongo/mongo";
-import createSubstrateApi from "../../utils/substrate-api";
 import * as jobDb from "../../mongo/sorting-validators-job";
 import JobNames from "./job-names";
+import usingApi from "../../utils/using-api";
 
 export interface JobData {
   ksi: number,
@@ -18,31 +18,31 @@ async function doJob(job: Agenda.Job<JobData>) {
 
   await retry(async () => {
     const mongo = createMongoConnection();
-    const api = await createSubstrateApi();
+    await usingApi(async api => {
+      const service = new RpiService(api, mongo);
 
-    const service = new RpiService(api, mongo);
-
-    await jobDb.setJobData(mongo, {
-      _id: job.attrs.data.id,
-      progress: {
-        current: 0,
-        total: 0
-      }
-    });
-
-    let progress: {current: number, total: number} = undefined;
-    const validators = await service.bestValidators(job.attrs.data.ksi, job.attrs.data.era, async ({current, total}) => {
-      progress = {
-        current,
-        total
-      };
-      console.log(`sorting validators job ${job.attrs.data.id} progress: ${current}/${total}`);
-      await jobDb.setJobData(mongo, { _id: job.attrs.data.id, progress });
-    });
-    await jobDb.setJobData(mongo, {
-      _id: job.attrs.data.id,
-      progress,
-      result: validators
+      await jobDb.setJobData(mongo, {
+        _id: job.attrs.data.id,
+        progress: {
+          current: 0,
+          total: 0
+        }
+      });
+  
+      let progress: {current: number, total: number} = undefined;
+      const validators = await service.bestValidators(job.attrs.data.ksi, job.attrs.data.era, async ({current, total}) => {
+        progress = {
+          current,
+          total
+        };
+        console.log(`sorting validators job ${job.attrs.data.id} progress: ${current}/${total}`);
+        await jobDb.setJobData(mongo, { _id: job.attrs.data.id, progress });
+      });
+      await jobDb.setJobData(mongo, {
+        _id: job.attrs.data.id,
+        progress,
+        result: validators
+      });
     });
   });
 }

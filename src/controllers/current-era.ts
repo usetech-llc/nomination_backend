@@ -1,12 +1,14 @@
 import { Request, Response } from 'express';
-import createSubstrateApi from '../utils/substrate-api';
+import usingApi from '../utils/using-api';
+import promisifySubstrate from '../utils/promisify-substrate';
 
 const currentEraController = async (req: Request, res: Response) => {
-  const api = await createSubstrateApi();
-  const lastEra = await api.query.staking.currentEra();
-  const lastEraNumber = lastEra.unwrapOrDefault().toNumber();
-  res.setHeader('Content-Type', 'application/json');
-  res.send(JSON.stringify(lastEraNumber));
+  await usingApi(async api => {
+    const lastEra = await promisifySubstrate(api, () => api.query.staking.currentEra())();
+    const lastEraNumber = lastEra.unwrapOrDefault().toNumber();
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify(lastEraNumber));
+  });
 }
 
 export default currentEraController;
