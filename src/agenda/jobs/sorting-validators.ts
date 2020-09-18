@@ -5,7 +5,7 @@ import RpiService from "../../rpi-nomination-strategy/rpi-service";
 import createMongoConnection from "../../mongo/mongo";
 import * as jobDb from "../../mongo/sorting-validators-job";
 import JobNames from "./job-names";
-import usingApi from "../../utils/using-api";
+import SubstrateClient from "../../substrate/substrate-client";
 
 export interface JobData {
   ksi: number,
@@ -18,8 +18,8 @@ async function doJob(job: Agenda.Job<JobData>) {
 
   await retry(async () => {
     const mongo = createMongoConnection();
-    await usingApi(async api => {
-      const service = new RpiService(api, mongo);
+    await SubstrateClient.usingClient(async client => {
+      const service = new RpiService(client, mongo);
 
       await jobDb.setJobData(mongo, {
         _id: job.attrs.data.id,

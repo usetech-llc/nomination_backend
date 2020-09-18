@@ -4,18 +4,17 @@ import retry from "../../utils/retry";
 import RpiService from "../../rpi-nomination-strategy/rpi-service";
 import { mongoMemoize } from "../../mongo/memoized-requests";
 import JobNames from "./job-names";
-import usingApi from "../../utils/using-api";
-import promisifySubstrate from "../../utils/promisify-substrate";
+import SubstrateClient from "../../substrate/substrate-client";
 
 async function doJob(job: Agenda.Job<{}>) {
 
   await retry(async() => {
     const mongo = createMongoConnection();
-    await usingApi(async api => {
-      const lastEra = await promisifySubstrate(api, () => api.query.staking.currentEra())();
+    await SubstrateClient.usingClient(async client => {
+      const lastEra = await client.promisifySubstrate(api => api.query.staking.currentEra());
       const lastEraNumber = lastEra.unwrapOrDefault().toNumber();
   
-      const service = new RpiService(api, mongo);
+      const service = new RpiService(client, mongo);
       const electedCall = service.electedInfoCall(lastEraNumber);
   
       const elected = await mongoMemoize(mongo, electedCall);
@@ -25,7 +24,6 @@ async function doJob(job: Agenda.Job<{}>) {
         await mongoMemoize(mongo, service.loadEraCall(eras[i], elected));
       }
     });
-
   });
 }
 

@@ -13,20 +13,20 @@ import { Exposure, ValidatorPrefs } from "@polkadot/types/interfaces/staking/typ
 import AccountId from "@polkadot/types/generic/AccountId";
 import { Option } from "@polkadot/types";
 import { BalanceOf } from "@polkadot/types/interfaces/runtime/types";
-import promisifySubstrate from "../utils/promisify-substrate";
+import SubstrateClient from "../substrate/substrate-client";
 
 type ReportProgress = (args: {current: number, total: number}) => Promise<any>;
 
 class RpiService {
   
   constructor(
-    private api: ApiPromise,
+    private client: SubstrateClient,
     private mongo: Mongoose) {
   }
 
   public electedInfoCall(era: number): MemoizedCallInfo<number, DeriveStakingElected> {
     return {
-      call: () => promisifySubstrate(this.api, () => this.api.derive.staking.electedInfo())(),
+      call: () => this.client.promisifySubstrate(api => api.derive.staking.electedInfo()),
       name: RpiMongoNames.electedInfo,
       params: era
     };
@@ -42,7 +42,7 @@ class RpiService {
 
   public erasStakersCall(era: number, accountId: AccountId | string): MemoizedCallInfo<{era: number, accountId: string}, Exposure> {
     return {
-      call: () => promisifySubstrate(this.api, (era, accountId) => this.api.query.staking.erasStakers(era, accountId))(era, accountId),
+      call: () => this.client.promisifySubstrate(api => api.query.staking.erasStakers(era, accountId)),
       name: RpiMongoNames.erasStakers,
       params: {
         era,
@@ -53,7 +53,7 @@ class RpiService {
 
   public erasValidatorRewardCall(era: number): MemoizedCallInfo<number, Option<BalanceOf>> {
     return {
-      call: () => promisifySubstrate(this.api, era => this.api.query.staking.erasValidatorReward(era))(era),
+      call: () => this.client.promisifySubstrate(api => api.query.staking.erasValidatorReward(era)),
       name: RpiMongoNames.erasValidatorReward,
       params: era
     };
@@ -61,7 +61,7 @@ class RpiService {
 
   public erasValidatorPrefsCall(era: number, accountId: AccountId | string): MemoizedCallInfo<{era: number, accountId: string}, ValidatorPrefs> {
     return {
-      call: () => promisifySubstrate(this.api, (era, accountId) => this.api.query.staking.erasValidatorPrefs(era, accountId))(era, accountId),
+      call: () => this.client.promisifySubstrate(api => api.query.staking.erasValidatorPrefs(era, accountId)),
       name: RpiMongoNames.erasValidatorPrefs,
       params: {
         era,

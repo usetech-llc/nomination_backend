@@ -4,7 +4,7 @@ import { RpiMongoNames } from '../models/rpi-mongo-names';
 import createMongoConnection from '../mongo/mongo';
 import RpiService from '../rpi-nomination-strategy/rpi-service';
 import { readMemoized, mongoMemoize } from '../mongo/memoized-requests';
-import usingApi from '../utils/using-api';
+import SubstrateClient from '../substrate/substrate-client';
 
 
 interface MemoizedRpiRequest {
@@ -58,10 +58,10 @@ const mongoController = {
     const accountId: string = req.query['accountId'] as string;
     const cacheOnly: boolean = req.query['cacheOnly'] === 'true';
 
-    await usingApi(async api => {
+    await SubstrateClient.usingClient(async client => {
       const mongo = createMongoConnection();
 
-      const rpiService = new RpiService(api, mongo);
+      const rpiService = new RpiService(client, mongo);
   
       const r: MemoizedRpiRequest = {
         accountId,

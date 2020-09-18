@@ -49,6 +49,7 @@
     "mongoose": "^5.10.0",
     "nodemailer": "^6.4.11",
     "path": "^0.12.7",
+    "promise-status-async": "^1.1.11",
     "q": "^1.5.1",
     "rwlock": "^5.0.0",
     "sprintf-js": "^1.1.2",

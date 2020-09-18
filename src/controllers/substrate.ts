@@ -8,8 +8,7 @@ import config from '../config.js';
 import * as sortingValidatorsJob from '../agenda/jobs/sorting-validators';
 import createAgenda from '../agenda/create-agenda.js';
 import { getJobData } from '../mongo/sorting-validators-job.js';
-import usingApi from '../utils/using-api.js';
-import promisifySubstrate from '../utils/promisify-substrate.js';
+import SubstrateClient from '../substrate/substrate-client.js';
 
 interface ISubstrateControllerInterface {
     bestValidators: (req: any, res: any) => void;
@@ -30,10 +29,10 @@ function cutValidatorsResponse(validators: Validator[]): any[] {
 
 async function getValidators(ksi: number, era: number): Promise<RpiBestValidatorsResponse> {
   return await retry(async () => {
-    return await usingApi(async api => {
+    return await SubstrateClient.usingClient(async client => {
       const mongo = createMongoConnection();
 
-      const service = new RpiService(api, mongo);
+      const service = new RpiService(client, mongo);
       
       if(!await service.areBestValidatorsMemoized(era)) {
         const jobId = await sortingValidatorsJob.now(await createAgenda(), { ksi, era: era })
@@ -66,8 +65,8 @@ const substrateController: ISubstrateControllerInterface = {
         return;
       }
 
-      const lastEraNumber = await usingApi(async api => {
-        const lastEra = await promisifySubstrate(api, () => api.query.staking.currentEra())();
+      const lastEraNumber = await SubstrateClient.usingClient(async client => {
+        const lastEra = await client.promisifySubstrate(api => api.query.staking.currentEra());
         return lastEra.unwrapOrDefault().toNumber();
       });
 

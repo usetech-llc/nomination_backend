@@ -1,9 +1,4 @@
-import createSubstrateApi from "./using-api";
-import { resolve } from "dns";
-
-function timeout(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+import asyncTimeout from "./async-timeout";
 
 export default async function retry<T>(f: () => Promise<T>, retryCount = 100): Promise<T> {
   try {
@@ -13,7 +8,8 @@ export default async function retry<T>(f: () => Promise<T>, retryCount = 100): P
       throw error;
     }
 
-    await timeout(10000);
+    console.log(`Task failed, ${retryCount} attempts remains`, error);
+    await asyncTimeout(10000);
     return await retry(f, retryCount - 1);
   }
 }

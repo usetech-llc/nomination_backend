@@ -8,6 +8,7 @@ import createAgenda from './agenda/create-agenda';
 import initAgenda from './agenda/init';
 import Agendash from 'agendash';
 import cluster from 'cluster';
+import SubstrateClient from './substrate/substrate-client';
 
 
 process.on('unhandledRejection', (reason, p) => {
@@ -37,6 +38,12 @@ async function initWebServer() {
   const agenda = await createAgenda();
   app.use('/dash', Agendash(agenda));
 
+  try {
+    await SubstrateClient.warmup();
+  } catch(error) {
+
+  }
+
   // Initializing routes.
   routes(app);
 
@@ -44,11 +51,11 @@ async function initWebServer() {
 }
 
 async function init() {
+  await initAgenda();
+
   if(cluster.isMaster) {
     await initWebServer();
   }
-
-  await initAgenda();
 }
 
 init();
