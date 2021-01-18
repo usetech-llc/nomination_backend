@@ -15,7 +15,7 @@
   "homepage": "",
   "dependencies": {
     "@polkadot/api": "^1.19.1",
-    "@types/bn.js": "^4.11.6",
+    "@types/bn.js": "^5.1.0",
     "body-parser": "^1.18.3",
     "express": "^4.17.1",
     "fs": "^0.0.1-security",
